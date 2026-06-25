@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard ML</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-title">Dashboard ML</div>
+
+    <nav>
+      <button class="nav-btn active" onclick="switchTab('regression', this)">Regresion Lineal</button>
+      <button class="nav-btn" onclick="switchTab('tree', this)">Arbol de Decision</button>
+    </nav>
+
+    <!-- SIDEBAR REGRESION -->
+    <div id="sidebarReg">
+      <div class="section-title">Datos (<span id="regDataCount">0</span>)</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>X</th><th>Y</th><th></th></tr></thead>
+          <tbody id="regDataBody"></tbody>
+        </table>
+        <p id="regEmptyMsg" class="empty-msg">Sin datos aun</p>
+      </div>
+      <div class="section-title">Ejemplos</div>
+      <div class="preset-row">
+        <button class="preset-btn" onclick="loadRegPreset('ventas')">Ventas</button>
+        <button class="preset-btn" onclick="loadRegPreset('temperatura')">Temperatura</button>
+      </div>
+      <button class="clear-btn" onclick="clearRegData()">Limpiar datos</button>
+    </div>
+
+    <!-- SIDEBAR ARBOL COVID -->
+    <div id="sidebarTree" style="display:none">
+      <div class="section-title">Base de datos</div>
+      <div class="info-box" id="treeDataInfo">
+        Cargando datos clinicos...
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <div class="topbar">
+      <h1 id="modelTitle">Regresion Lineal</h1>
+      <div class="topbar-right">
+        <span id="statusText" class="status">Sin entrenar</span>
+        <button class="btn-train" onclick="trainActive()">Entrenar</button>
+      </div>
+    </div>
+
+    <!-- ── TAB: REGRESION LINEAL ── -->
+    <div id="tabRegression">
+
+      <div class="card">
+        <div class="card-title">Agregar dato</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Variable X</label>
+            <input type="number" id="regInX" placeholder="ej. 5" step="0.1">
+          </div>
+          <div class="form-group">
+            <label>Variable Y</label>
+            <input type="number" id="regInY" placeholder="ej. 120" step="0.1">
+          </div>
+          <button class="btn-add" onclick="addRegPoint()">Agregar</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Predecir</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Valor de X</label>
+            <input type="number" id="regPredX" placeholder="ej. 11" step="0.1">
+          </div>
+          <button class="btn-predict" id="regPredBtn" onclick="predictReg()" disabled>Predecir</button>
+        </div>
+        <div id="regPredResult" class="pred-result" style="display:none"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Regresion Lineal</div>
+        <div class="metrics-row" id="regMetrics" style="display:none">
+          <div class="metric"><div class="metric-val" id="regM">—</div><div class="metric-lbl">Pendiente (m)</div></div>
+          <div class="metric"><div class="metric-val" id="regB">—</div><div class="metric-lbl">Intercepto (b)</div></div>
+          <div class="metric"><div class="metric-val" id="regR2">—</div><div class="metric-lbl">R²</div></div>
+          <div class="metric"><div class="metric-val" id="regMAE">—</div><div class="metric-lbl">Error medio</div></div>
+        </div>
+        <canvas id="regCanvas"></canvas>
+        <p id="regIdle" class="idle-msg">Agrega datos y entrena para ver la grafica</p>
+      </div>
+
+    </div>
+
+    <!-- ── TAB: ARBOL COVID ── -->
+    <div id="tabTree" style="display:none">
+
+      <div class="card">
+        <div class="card-title">Expediente del Paciente</div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Edad del paciente</label>
+            <input type="number" id="covidEdad" placeholder="ej. 45" min="0" max="110">
+          </div>
+          <div class="form-group">
+            <label>Genero</label>
+            <select id="covidGenero">
+              <option value="1">Masculino</option>
+              <option value="0">Femenino</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Nivel de gravedad (1-5)</label>
+            <select id="covidGravedad">
+              <option value="1">1 — Leve</option>
+              <option value="2">2 — Moderado</option>
+              <option value="3">3 — Grave</option>
+              <option value="4">4 — Critico</option>
+              <option value="5">5 — Muy critico</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row" style="margin-top:10px">
+          <div class="form-group">
+            <label>Intervenciones medicas</label>
+            <input type="number" id="covidIntervenciones" placeholder="ej. 2" min="0" max="20" value="1">
+          </div>
+          <div class="form-group">
+            <label>Diagnostico inicial</label>
+            <select id="covidDx">
+              <option value="2">U071 - COVID-19, VIRUS IDENTIFICADO</option>
+              <option value="1">U072 - COVID-19, VIRUS NO IDENTIFICADO</option>
+              <option value="0">Otro diagnostico respiratorio</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row" style="margin-top:10px">
+          <div class="form-group checkbox-group">
+            <label>
+              <input type="checkbox" id="covidHospitalizado" checked>
+              Se encuentra hospitalizado
+            </label>
+          </div>
+          <div class="form-group checkbox-group">
+            <label>
+              <input type="checkbox" id="covidUrgencias">
+              Ingreso por urgencias
+            </label>
+          </div>
+        </div>
+
+        <div style="margin-top:14px">
+          <button class="btn-train" id="covidPredBtn" onclick="predictCovid()" disabled>
+            Ejecutar Diagnostico Predictivo
+          </button>
+        </div>
+      </div>
+
+      <!-- RESULTADO -->
+      <div id="covidResult" style="display:none">
+        <div class="result-grid">
+          <div class="result-card">
+            <div class="result-lbl">Requerimiento de Tubo</div>
+            <div class="result-val" id="resTubo">—</div>
+          </div>
+          <div class="result-card">
+            <div class="result-lbl">Estancia Estimada</div>
+            <div class="result-val" id="resEstancia">—</div>
+          </div>
+          <div class="result-card">
+            <div class="result-lbl">Pronostico de Mortalidad</div>
+            <div class="result-val" id="resMortalidad">—</div>
+          </div>
+        </div>
+        <div id="resAlerta" class="alerta" style="display:none"></div>
+      </div>
+
+      <!-- METRICAS DEL MODELO -->
+      <div class="panel">
+        <div class="panel-title">
+          Arbol de Decision — COVID-19
+          <span class="control-inline">
+            Profundidad:
+            <input type="range" id="maxDepth" min="1" max="6" value="4"
+              oninput="document.getElementById('depthVal').textContent=this.value">
+            <span id="depthVal">4</span>
+          </span>
+        </div>
+        <div class="metrics-row" id="treeMetrics" style="display:none">
+          <div class="metric"><div class="metric-val" id="treeAcc">—</div><div class="metric-lbl">Precision</div></div>
+          <div class="metric"><div class="metric-val" id="treeRecs">—</div><div class="metric-lbl">Registros</div></div>
+          <div class="metric"><div class="metric-val" id="treeNodes">—</div><div class="metric-lbl">Nodos</div></div>
+          <div class="metric"><div class="metric-val" id="treeDepthVal">—</div><div class="metric-lbl">Profundidad</div></div>
+        </div>
+        <p id="treeIdle" class="idle-msg">Presiona Entrenar para cargar el modelo con los datos clinicos</p>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="models.js"></script>
+<script src="covid_data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
